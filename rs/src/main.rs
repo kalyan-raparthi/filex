@@ -17,40 +17,45 @@ fn main() {
     loop {
         let (mut stream, cli_addr) = listener.accept().expect("ERROR OCCURRED WHILE LISTING FROM CONNECTIONS");
         println!("CONNECTED TO CLIENT: {}", cli_addr);
-        
-        let mut file = File::open("index.html").expect("ERROR WHILE OPENING FILE");
-        file.write_all(read_dir(".").as_bytes()).expect_err("ERROR WHILE WRITING TO FILE");
 
         stream.read(&mut buffer).expect(&format!("ERROR WHILE READING FROM {}", cli_addr).to_string());
         println!("REQUEST RECEIVED FROM: {}", cli_addr);
 
-        let file_path = "index.html"; 
-        let file_content = fs::read(file_path).expect("ERROR WHILE OPENING HTML FILE");
+        let file_names = read_dir(".");
+        let mut response_str = String::from("
+        <!DOCTYPE html> 
+        <style> * { font-family: monospace; } </style>
 
-        let content_size = file_content.len();  
+        ");
+
+        for i in file_names {
+            response_str.push_str(&i);
+            response_str.push('\n');
+        } 
 
         let response = format!(
             "HTTP/1.1 200 OK\r\n\
             Content-Type: text/html\r\n\
             Content-Length: {}\r\n\
-            \r\n", content_size + 512
+            \r\n", 512
         );
 
         stream.write_all(response.as_bytes()).expect("ERROR WHILE WRITING TO CLIENT");
-        stream.write_all(&file_content).expect("ERROR WHILE SENDING HTML FILE CONTENT");        
+        stream.write_all(response_str.as_bytes()).expect("ERROR WHILE SENDING HTML FILE CONTENT");        
     }
 
 }
 
-fn read_dir(path: &str) -> String{
-    let mut res = String::new();
+fn read_dir(path: &str) -> Vec<String>{
+    let mut res = vec![];
+
     match fs::read_dir(path) {
         Ok(entries) => {
             for entry in entries {
                 match entry {
                     Ok(entry) => {
-                        let file_name = entry.file_name().into_string().expect("");
-                        res.push_str(&file_name);
+                        let file_name = entry.file_name().into_string().expect("FILE ERROR");
+                        res.push(file_name);
                     },
                     Err(e) => eprintln!("Error reading entry: {}", e),
                 }
@@ -58,5 +63,5 @@ fn read_dir(path: &str) -> String{
         },
         Err(e) => eprintln!("Error reading directory: {}", e),
     }
-    return res.to_string();
+    return res;
 }
