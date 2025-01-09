@@ -1,7 +1,6 @@
-use std::fs::{self, File};
+use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
-// use std::path;
 
 fn main() {
     const BUF_SIZE: usize = 4096; // BUFFER SIZE
@@ -10,43 +9,54 @@ fn main() {
     println!("FILEX STARTED");
     let addr = "127.0.0.1:2025";
 
-    let listener: TcpListener = TcpListener::bind(addr).expect("ERROR WHILE CREATING SOCKET");
+    let listener = TcpListener::bind(addr).expect("ERROR WHILE CREATING SOCKET");
     println!("SERVER IS LIVE AT: {}", addr);
 
-    
     loop {
-        let (mut stream, cli_addr) = listener.accept().expect("ERROR OCCURRED WHILE LISTING FROM CONNECTIONS");
+        // WAITING FOR REQUEST
+        let (mut stream, cli_addr) = listener.accept().expect("ERROR OCCURRED WHILE LISTENING FOR CONNECTIONS");
         println!("CONNECTED TO CLIENT: {}", cli_addr);
 
-        stream.read(&mut buffer).expect(&format!("ERROR WHILE READING FROM {}", cli_addr).to_string());
+        // NOTIFYING CLINECT REQUEST;
+        stream.read(&mut buffer).expect(&format!("ERROR WHILE READING FROM {}", cli_addr));
         println!("REQUEST RECEIVED FROM: {}", cli_addr);
 
+        // GET FILE_NAMES IN PWD
         let file_names = read_dir(".");
-        let mut response_str = String::from("
-        <!DOCTYPE html> 
-        <style> * { font-family: monospace; } </style>
 
-        ");
+        //CREATING BOILERPLATE FOR RESPONSE STRING
+        let mut response_str = String::from(
+            "<!DOCTYPE html>\
+            <html>\
+            <head><link rel='stylesheet' href='https://kalyan-raparthi.github.io/me/pages/style.css'></head>\
+            <body>\
+            <h1>Files</h1><br>"
+        );
 
-        for i in file_names {
-            response_str.push_str(&i);
-            response_str.push('\n');
+        for file_name in file_names {
+            let temp_str = format!("<button>{}</button><br>", file_name);
+            response_str.push_str(&temp_str);
         } 
 
+        response_str.push_str("</body></html>");
+
+        // Create HTTP response
         let response = format!(
             "HTTP/1.1 200 OK\r\n\
             Content-Type: text/html\r\n\
             Content-Length: {}\r\n\
-            \r\n", 512
+            \r\n\
+            {}",
+            response_str.len(),
+            response_str
         );
 
+        // WRITING HTML RESPONSE AS TEXT/HTML
         stream.write_all(response.as_bytes()).expect("ERROR WHILE WRITING TO CLIENT");
-        stream.write_all(response_str.as_bytes()).expect("ERROR WHILE SENDING HTML FILE CONTENT");        
     }
-
 }
 
-fn read_dir(path: &str) -> Vec<String>{
+fn read_dir(path: &str) -> Vec<String> {
     let mut res = vec![];
 
     match fs::read_dir(path) {
@@ -54,8 +64,9 @@ fn read_dir(path: &str) -> Vec<String>{
             for entry in entries {
                 match entry {
                     Ok(entry) => {
-                        let file_name = entry.file_name().into_string().expect("FILE ERROR");
-                        res.push(file_name);
+                        if let Some(file_name) = entry.file_name().to_str() {
+                            res.push(file_name.to_string());
+                        }
                     },
                     Err(e) => eprintln!("Error reading entry: {}", e),
                 }
@@ -63,5 +74,6 @@ fn read_dir(path: &str) -> Vec<String>{
         },
         Err(e) => eprintln!("Error reading directory: {}", e),
     }
-    return res;
+    
+    res // RETURNING VEC CONTAINING FILE_NAMES
 }
