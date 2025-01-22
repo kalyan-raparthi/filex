@@ -7,6 +7,4 @@ usage:
     2. run: cargo run
 ``` 
 
-```
-~~a_gudakesh production~~
-```
+a_gudakesh production 
