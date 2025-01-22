@@ -1,5 +1,8 @@
-FILEX: RUST FTP SERVER IMPLIMENTATION.
+## FILEX: RUST FTP SERVER
 
+
+```
 usage:
     1. install cargo 
-    2. run > cargo run
+    2. run > ` cargo run `
+``` 
