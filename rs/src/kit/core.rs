@@ -86,6 +86,7 @@ pub fn get_header(response_type: &str, path: &str) -> String {
 
 /// Sends the requested file to the client.
 pub fn send_file(writer: &mut BufWriter<&TcpStream>, path: &str) {
+    println!("REQ_FILE: {}", path);
     let file = File::open(path).expect("ERROR WHILE OPENING FILE");
     
     let paths = path.split('/').last().unwrap();
@@ -109,7 +110,6 @@ pub fn response(stream: TcpStream) {
     let mut request = String::new();
     let _ = reader.read_line(&mut request);
 
-    println!("{}", request);
     match request.split_whitespace().next().unwrap() {
         "GET" => { handle_get( &mut writer, request.split_whitespace().nth(1).unwrap());}
         _ => { eprintln!("INVALID HTTP METHOD"); }
@@ -119,7 +119,7 @@ pub fn response(stream: TcpStream) {
 // Handles a GET request by sending the requested file or a 404 response if the file does not exist.
 // ====================================== write handler for get request ======================================= //    
 fn handle_get(writer: &mut BufWriter<&TcpStream>, path: &str) {
-    println!("GET: {}", path);
+    println!("---------------------------------------------------------\nGET: {}", path);
     send_ftp_response(writer, path);
 }
 
@@ -129,10 +129,7 @@ fn send_ftp_response(writer: &mut BufWriter<&TcpStream>, path: &str) {
         HOME
     } else { 
         &format!("{}{}", HOME, path)
-    };
-    
-    println!("SENDING FTP RESPONSE: {}/{}", HOME, path_for_dir);
-
+    };  
     let metadata = fs::metadata(path_for_dir).expect("ERROR WHILE GETTING METADATA");  
     if metadata.is_dir() {
         println!("SENDING DIRECTORY: {}", path_for_dir);
@@ -146,11 +143,31 @@ fn send_ftp_response(writer: &mut BufWriter<&TcpStream>, path: &str) {
 }
 
 // SEND DIR FUNCTION
-fn send_dir(writer: &mut BufWriter<&TcpStream>, path: &str) {
-    println!("REQUEST_DIR: {}", path);
 
-    let mut body = String::new();
+// fn send_dir(writer: &mut BufWriter<&TcpStream>, path: &str) {
+//     let mut body = String::new();
     
+//     let dir = match std::fs::read_dir(path) {
+//         Ok(dir) => dir,
+//         Err(_) => {
+//             send_response(writer, 500, "INTERNAL SERVER ERROR", "500 INTERNAL SERVER ERROR".to_string());
+//             return;
+//         }
+//     };
+    
+//     for entry in dir.filter_map(Result::ok) {
+//         let name = match entry.file_name().into_string() {
+//             Ok(name) => name,
+//             Err(_) => continue,
+//         };
+//         body.push_str(&format!("<a href=\"{}{}\">{}</a><br>", path, name, name));
+//     }
+//     send_response(writer, 200, "OK", body);
+// }
+
+fn send_dir(writer: &mut BufWriter<&TcpStream>, path: &str) {
+    let mut body = String::new();
+
     let dir = match std::fs::read_dir(path) {
         Ok(dir) => dir,
         Err(_) => {
@@ -158,13 +175,26 @@ fn send_dir(writer: &mut BufWriter<&TcpStream>, path: &str) {
             return;
         }
     };
-    
+
     for entry in dir.filter_map(Result::ok) {
         let name = match entry.file_name().into_string() {
             Ok(name) => name,
             Err(_) => continue,
         };
-        body.push_str(&format!("<a href=\"{}/{}\">{}/</a><br>", path, name, name));
+
+        let metadata = match entry.metadata() {
+            Ok(metadata) => metadata,
+            Err(_) => continue,
+        };
+        // REMOVING HOME DIRECTORY FROM PATH SO THAT IT CAN BE USED AS RELATIVE PATH
+        let relative_path = path.strip_prefix(HOME).unwrap_or(path);
+        let relative_path = format!("{}/{}", relative_path, name);
+
+        if metadata.is_dir() {
+            body.push_str(&format!("<a href=\"{}\">{}/</a><br>", relative_path, name));
+        } else {
+            body.push_str(&format!("<a href=\"{}\">{}</a> ({})<br>", relative_path, name, metadata.len()));
+        }
     }
     send_response(writer, 200, "OK", body);
 }
