@@ -4,7 +4,8 @@
 ```
 usage:
     1. install cargo 
-    2. run: cargo run
+    2. run:
+        > cd rs & cargo run
 ``` 
 
 a_gudakesh production 
