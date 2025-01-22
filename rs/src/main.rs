@@ -1,27 +1,10 @@
-use std::fmt::Error;
+mod kit;
+use kit::core;
 
-fn main() {
-    let src = ".";
-    read_dir(src).unwrap();
-}
+use std::fmt::Result;
 
-fn read_dir(src: &str) -> Result<(), Error> {
-    let dir = std::fs::read_dir(src).unwrap();
-    for entry in dir {
-        let entry = entry.unwrap();
-        
-        if is_file(entry.path().to_str().unwrap()) {
-            println!("{}", entry.path().file_name().unwrap().to_string_lossy());
-        } else {
-            println!("{}/", entry.path().to_string_lossy());
-        }
+fn main() -> Result {
+    core::app_start("localhost", "2020").expect("error");
 
-    }
     Ok(())
-
-}
-
-fn is_file(src: &str) -> bool {
-    let metadata = std::fs::metadata(src).unwrap();
-    metadata.is_file()
 }
