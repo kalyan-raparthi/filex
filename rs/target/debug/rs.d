@@ -1,1 +1,1 @@
-C:\Users\Jahnavi\Desktop\filex\rs\target\debug\rs.exe: C:\Users\Jahnavi\Desktop\filex\rs\src\http\methods.rs C:\Users\Jahnavi\Desktop\filex\rs\src\http\mod.rs C:\Users\Jahnavi\Desktop\filex\rs\src\http\parser.rs C:\Users\Jahnavi\Desktop\filex\rs\src\main.rs
+C:\Users\Jahnavi\qb\filex\rs\target\debug\rs.exe: C:\Users\Jahnavi\qb\filex\rs\src\main.rs
