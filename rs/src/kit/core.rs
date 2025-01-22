@@ -190,10 +190,32 @@ fn send_dir(writer: &mut BufWriter<&TcpStream>, path: &str) {
         let relative_path = path.strip_prefix(HOME).unwrap_or(path);
         let relative_path = format!("{}/{}", relative_path, name);
 
+        let style = r#"
+            <style>
+                body {
+                    font-family: monospace;
+                    background-color: #f0f0f0;
+                }
+                a {
+                    color: #0000ff;
+                    text-decoration: none;
+                }
+                a:hover {
+                    text-decoration: underline;
+                }
+                a.dir {
+                    font-weight: bold;
+                }
+                a.files {
+                    font-style: italic;
+                }
+            </style>"#;
+
+        body.push_str(style);          
         if metadata.is_dir() {
-            body.push_str(&format!("<a href=\"{}\">{}/</a><br>", relative_path, name));
+            body.push_str(&format!("<a href=\"{}\" class=\"dir\">{}/</a><br>", relative_path, name));
         } else {
-            body.push_str(&format!("<a href=\"{}\">{}</a> ({})<br>", relative_path, name, metadata.len()));
+            body.push_str(&format!("<a href=\"{}\" class=\"files\">{}</a> ({})<br>", relative_path, name, metadata.len()));
         }
     }
     send_response(writer, 200, "OK", body);
