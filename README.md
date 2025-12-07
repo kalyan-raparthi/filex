@@ -8,4 +8,4 @@ usage:
         > cd rs & cargo run
 ``` 
 
-a_gudakesh production 
+a_gudakesh
